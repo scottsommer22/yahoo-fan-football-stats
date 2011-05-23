@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="FantasyFootball" basedir=".">
+	<!-- properties setup -->
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="main.config.dir" value="${basedir}/config" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="target.dir" value="${basedir}/target" />
+	<property name="target.classes.dir" value="${target.dir}/classes" />
+	<property name="javadoc.dir" value="${basedir}/javadoc" />
+
+	<path id="target.classpath">
+		<pathelement location="${target.classes.dir}" />
+		<pathelement location="${main.config.dir}" />
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="clean">
+		<delete includeemptydirs="true" failonerror="false">
+			<fileset dir="${target.classes.dir}" includes="**/*" />
+		</delete>
+		<delete includeemptydirs="true" failonerror="false">
+			<fileset dir="${target.test.classes.dir}" includes="**/*" />
+		</delete>
+
+		<delete dir="${javadoc.dir}" />
+		<mkdir dir="${javadoc.dir}" />
+
+	</target>
+
+	<target name="compile" depends="clean">
+		<javac srcdir="${src.dir}" destdir="${target.classes.dir}" target="1.6" source="1.6" debug="on" debuglevel="lines,vars,source">
+			<classpath refid="target.classpath" />
+		</javac>
+	</target>
+
+	<target name="generate-javadocs">
+		<javadoc source="1.6" destdir="${javadoc.dir}" author="true" version="true" use="true" windowtitle="${ant.project.name} API" doctitle="${ant.project.name} API" classpathref="target.classpath" useexternalfile="true">
+			<fileset dir="${src.dir}" defaultexcludes="yes">
+				<include name="**/*.*" />
+			</fileset>
+		</javadoc>
+	</target>
+
+	<target name="build" depends="clean, compile, generate-javadocs">
+	</target>
+
+	<target name="run">
+		<java fork="true" classname="fantfootball.gui.StatsLoaderGui">
+			<classpath refid="target.classpath" />
+		</java>
+	</target>
+
+</project>
