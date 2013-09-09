@@ -3,9 +3,20 @@ package fantfootball.stats;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
 import org.apache.log4j.Logger;
+import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.DomSerializer;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+
 
 /**
  * A object that extracts the player stats from the yahoo html.
@@ -44,6 +55,8 @@ public class YahooPlayerStatsDownloader {
 
     private static final Logger LOGGER = Logger.getLogger(YahooPlayerStatsDownloader.class);
 
+    private static final String TEAM_TAG = "yfa-td-flex Grid-h-mid Px-sm";
+    
     private HtmlPageLoader loader;
 
     private String leagueKey;
@@ -108,7 +121,7 @@ public class YahooPlayerStatsDownloader {
             HtmlCleaner cleaner = new HtmlCleaner();
             TagNode root = cleaner.clean(html);
 
-            TagNode[] teams = root.getElementsByAttValue("class", "team", true, true);
+            TagNode[] teams = root.getElementsByAttValue("class", TEAM_TAG, true, true);
             LOGGER.debug("Found " + teams.length + " teams");
 
             List<Team> allTeams = new ArrayList<Team>();
@@ -146,13 +159,13 @@ public class YahooPlayerStatsDownloader {
             String html = loader.getHtml(YAHOO + team.getLink() + "?week=" + week);
             HtmlCleaner cleaner = new HtmlCleaner();
             TagNode root = cleaner.clean(html);
+            Document doc = new DomSerializer(new CleanerProperties()).createDOM(root);
 
             List<PlayerStat> stats = new ArrayList<PlayerStat>();
-            getPlayers(root, stats, week, team.getName());
-            getPositions(root, stats);
-            getPoints(root, stats);
+            getPlayers(doc, stats, week, team.getName());
+            getPositions(doc, stats);
+            getPerformance(doc, stats);
 
-            // LOGGER.debug(html);
             return stats;
 
         } catch (Exception e) {
@@ -160,78 +173,130 @@ public class YahooPlayerStatsDownloader {
         }
     }
 
-    /**
-     * Extract the points scored for each player.
-     * 
-     * @param root
-     *            the Html node
-     * @param stats
-     *            the player stats to update
-     */
-    private void getPoints(TagNode root, List<PlayerStat> stats) {
-        List<String> points = getFieldByClassFromTd(root, "pts last");
+
+    
+    private void getPerformance(Document doc, List<PlayerStat> stats) {
+        List<Node> players = getNodesFromClass(doc, "pps has-stat-note","a");
         for (int i = 0; i < stats.size(); i++) {
-            stats.get(i).setPoints(points.get(i));
+            Node player = players.get(i);
+            String points = player.getTextContent();
+            String projected = player.getParentNode().getNextSibling().getTextContent();
+            String percentage = player.getParentNode().getNextSibling().getNextSibling().getTextContent();
+            
+            double converted = Double.parseDouble(percentage.replace("%", ""))/100;
+            
+            PlayerStat stat = stats.get(i);
+            stat.setPoints(Double.parseDouble(points));
+            stat.setProjectedPoints(Double.parseDouble(projected));
+            stat.setPerctStart(converted);
+           // LOGGER.debug(stat);
         }
     }
 
-    /**
-     * Extract each players position.
-     * 
-     * @param root
-     *            the Html node to search
-     * @param stats
-     *            the stats to update
-     */
-    private void getPositions(TagNode root, List<PlayerStat> stats) {
-        List<String> positions = getFieldByClassFromTd(root, "pos first");
+
+    private void getPositions(Document doc, List<PlayerStat> stats) {
+        List<String> positions = getNodeTextFromClass(doc, "pos-label","span");
         for (int i = 0; i < stats.size(); i++) {
             stats.get(i).setPosition(positions.get(i));
+            //LOGGER.debug(stats.get(i));
         }
     }
 
-    /**
-     * Get all the players on a team.
-     * 
-     * @param root
-     *            the Html node to search
-     * @param stats
-     *            the stats to initialize
-     * @param week
-     *            the week this is for
-     * @param name
-     *            the name of the team manager
-     */
-    private void getPlayers(TagNode root, List<PlayerStat> stats, int week, String name) {
-        List<String> players = getFieldByClassFromTd(root, "player");
-        for (String player : players) {
+    private void getPlayers(Document doc, List<PlayerStat> stats, int week, String name) {
+        //List<String> players = getNodeText(root, PLAYER_NAME_TAG,"a");
+        List<Player> players = getPlayers(doc);
+        for (Player player : players) {
             PlayerStat stat = new PlayerStat(week, name);
-            int end = player.indexOf(")");
-            stat.setPlayer(player.substring(0, end + 1));
+            stat.setPlayer(player);
             stats.add(stat);
+           // LOGGER.debug(stat);
         }
     }
-
-    /**
-     * Extract a field from a Html table node.
-     * 
-     * @param root
-     *            the Html node to search
-     * @param className
-     *            the class name to extract
-     * @return an array of all the values in the order found
-     */
-    private List<String> getFieldByClassFromTd(TagNode root, String className) {
-        List<String> values = new ArrayList<String>();
-        TagNode[] positionNodes = root.getElementsByAttValue("class", className, true, true);
-
-        for (TagNode node : positionNodes) {
-            if (node.getName().equals("td")) {
-                values.add(node.getText().toString());
+    
+    private List<Player> getPlayers(Document doc){
+       
+        try{
+        
+            List<Player> players = new ArrayList<Player>();
+            
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            String path = "//div[contains(@class,'ysf-player-name')]";
+            NodeList nl = (NodeList) xpath.evaluate(path, doc, XPathConstants.NODESET);
+            
+            //Go through each player
+            for(int i = 0; i < nl.getLength(); i++){
+                Node n = nl.item(i);
+                Node name = n.getFirstChild();
+                Node posTeam = name.getNextSibling().getNextSibling();
+                
+                Player p = new Player();
+                p.setName(name.getTextContent());
+                
+                String positionTeam = posTeam.getTextContent();
+                int split = positionTeam.indexOf("-");
+                p.setTeam(positionTeam.substring(0, split-1));
+                p.setPosition(positionTeam.substring(split+2,positionTeam.length() ));
+                
+                players.add(p);
             }
+                        
+            return players;
+        } catch(Exception e){
+            throw new IllegalStateException(e);
         }
-
-        return values;
     }
 
+
+    private List<String> getNodeTextFromClass(Document doc, String className, String nodeType) {
+        try{
+        List<String> values = new ArrayList<String>();
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        String path = "//"+ nodeType + "[contains(@class,'"+className+ "')]/text()";
+        NodeList nl = (NodeList) xpath.evaluate(path, doc, XPathConstants.NODESET);
+
+        if(nl == null || nl.getLength() < 1){
+            LOGGER.warn("FOUND ZERO NODES FOR " + className);
+            return values;
+        }
+
+        for (int i = 0; i<nl.getLength(); i++){
+            Node n = nl.item(i);
+            String value = n.getTextContent();
+            values.add(value);
+        }
+        
+        return values;
+    
+        }catch(Exception e){
+            throw new IllegalStateException(e);
+        }
+
+    }
+
+    private List<Node> getNodesFromClass(Document doc, String className, String nodeType) {
+        try{
+        List<Node> values = new ArrayList<Node>();
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        String path = "//"+ nodeType + "[contains(@class,'"+className+ "')]";
+        NodeList nl = (NodeList) xpath.evaluate(path, doc, XPathConstants.NODESET);
+
+        if(nl == null || nl.getLength() < 1){
+            LOGGER.warn("FOUND ZERO NODES FOR " + className);
+            return values;
+        }
+
+        for (int i = 0; i<nl.getLength(); i++){
+            Node n = nl.item(i);
+            values.add(n);
+        }
+        
+        return values;
+    
+        }catch(Exception e){
+            throw new IllegalStateException(e);
+        }
+
+    }
+    
 }
+    
