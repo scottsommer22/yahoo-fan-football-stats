@@ -16,6 +16,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import fantfootball.datamodel.Player;
+import fantfootball.datamodel.PlayerStat;
+import fantfootball.datamodel.Position;
+import fantfootball.datamodel.Team;
+
 
 
 /**
@@ -23,33 +28,6 @@ import org.w3c.dom.NodeList;
  */
 public class YahooPlayerStatsDownloader {
 
-    /**
-     * Class representing the details of a team.
-     */
-    private static class Team {
-
-        private String name;
-
-        private String link;
-
-        public Team(String name, String link) {
-            this.name = name;
-            this.link = link;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getLink() {
-            return link;
-        }
-
-        public String toString() {
-            return name + "," + link;
-        }
-
-    }
 
     private static final String YAHOO = "http://football.fantasysports.yahoo.com";
 
@@ -129,8 +107,10 @@ public class YahooPlayerStatsDownloader {
                 if (team.getName().equals("td")) {
                     TagNode[] node = team.getElementsByName("a", true);
                     String name = node[0].getText().toString();
-                    String link = node[0].getAttributeByName("href");
-                    Team t = new Team(name, link);
+                    String link = node[0].getAttributeByName("href");              
+                    String key = getKeyFromUrl(link);
+                    
+                    Team t = new Team(name, link,Integer.parseInt(key));
                     allTeams.add(t);
                     LOGGER.debug(t);
 
@@ -162,7 +142,7 @@ public class YahooPlayerStatsDownloader {
             Document doc = new DomSerializer(new CleanerProperties()).createDOM(root);
 
             List<PlayerStat> stats = new ArrayList<PlayerStat>();
-            getPlayers(doc, stats, week, team.getName());
+            getPlayers(doc, stats, week, team);
             getPositions(doc, stats);
             getPerformance(doc, stats);
 
@@ -197,16 +177,16 @@ public class YahooPlayerStatsDownloader {
     private void getPositions(Document doc, List<PlayerStat> stats) {
         List<String> positions = getNodeTextFromClass(doc, "pos-label","span");
         for (int i = 0; i < stats.size(); i++) {
-            stats.get(i).setPosition(positions.get(i));
+            stats.get(i).setPosition(Position.fromTag(positions.get(i)));
             //LOGGER.debug(stats.get(i));
         }
     }
 
-    private void getPlayers(Document doc, List<PlayerStat> stats, int week, String name) {
+    private void getPlayers(Document doc, List<PlayerStat> stats, int week, Team team) {
         //List<String> players = getNodeText(root, PLAYER_NAME_TAG,"a");
         List<Player> players = getPlayers(doc);
         for (Player player : players) {
-            PlayerStat stat = new PlayerStat(week, name);
+            PlayerStat stat = new PlayerStat(week, team);
             stat.setPlayer(player);
             stats.add(stat);
            // LOGGER.debug(stat);
@@ -231,11 +211,15 @@ public class YahooPlayerStatsDownloader {
                 
                 Player p = new Player();
                 p.setName(name.getTextContent());
+                String playerURL = name.getAttributes().getNamedItem("href").getTextContent();
+                String playerKey = getKeyFromUrl(playerURL);
+                p.setKey(playerKey);
                 
                 String positionTeam = posTeam.getTextContent();
                 int split = positionTeam.indexOf("-");
                 p.setTeam(positionTeam.substring(0, split-1));
-                p.setPosition(positionTeam.substring(split+2,positionTeam.length() ));
+                String positionTag = positionTeam.substring(split+2,positionTeam.length());
+                p.setPosition(Position.fromTag(positionTag));
                 
                 players.add(p);
             }
@@ -246,6 +230,15 @@ public class YahooPlayerStatsDownloader {
         }
     }
 
+    private String getKeyFromUrl(String url){
+        
+        String[] tokens = url.split("/");
+        
+        String key = tokens[tokens.length-1];
+        
+        return key;
+    }
+    
 
     private List<String> getNodeTextFromClass(Document doc, String className, String nodeType) {
         try{
