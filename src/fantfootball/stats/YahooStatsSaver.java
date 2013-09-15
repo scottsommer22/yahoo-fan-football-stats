@@ -2,6 +2,7 @@ package fantfootball.stats;
 
 import java.util.List;
 
+import fantfootball.datamodel.PlayerStat;
 import fantfootball.stats.settings.JaxbSettingsLoader;
 import fantfootball.stats.settings.Settings;
 import fantfootball.stats.settings.SettingsLoader;
