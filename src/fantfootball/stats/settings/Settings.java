@@ -13,6 +13,7 @@ public class Settings {
     private int fromWeek = 1;
     private int toWeek = 1;
     private String location = "stats.csv";
+    private String aggLocation = "aggstats.csv";
 
     public Settings() {
     }
@@ -34,13 +35,14 @@ public class Settings {
      * @param location
      *            the location to save the data to
      */
-    public Settings(String league, String cookie, int fromWeek, int toWeek, String location) {
+    public Settings(String league, String cookie, int fromWeek, int toWeek, String location, String aggLocation) {
         super();
         this.league = league;
         this.cookie = cookie;
         this.fromWeek = fromWeek;
         this.toWeek = toWeek;
         this.location = location;
+        this.aggLocation = aggLocation;
     }
 
     public String getLeague() {
@@ -82,5 +84,15 @@ public class Settings {
     public void setLocation(String location) {
         this.location = location;
     }
+
+	public String getAggLocation() {
+		return aggLocation;
+	}
+
+	public void setAggLocation(String aggLocation) {
+		this.aggLocation = aggLocation;
+	}
+    
+    
 
 }

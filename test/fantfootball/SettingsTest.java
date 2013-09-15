@@ -17,7 +17,7 @@ public class SettingsTest {
     @Test
     public void marshall() {
 
-        Settings settings = new Settings("l", "c", 1, 2, "stats.csv");
+        Settings settings = new Settings("l", "c", 1, 2, "stats.csv", "aggstats.csv");
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         

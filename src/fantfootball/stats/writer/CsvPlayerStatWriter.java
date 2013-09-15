@@ -4,8 +4,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.List;
 
-import fantfootball.stats.PlayerStat;
-
 /**
  * This type is a very simple csv writer.  It relies on the toString method of PlayStat to output in CSV format.
  */
@@ -13,14 +11,19 @@ public class CsvPlayerStatWriter implements PlayerStatWriter {
 
     private String fileName = "stats.csv";
 
-    @Override
-    public void write(List<PlayerStat> stats) {
+    public CsvPlayerStatWriter(String fileName) {
+		super();
+		this.fileName = fileName;
+	}
+
+	@Override
+    public void write(List<?> stats) {
         try {
             // Create file
             FileWriter fstream = new FileWriter(fileName);
             BufferedWriter out = new BufferedWriter(fstream);
 
-            for (PlayerStat stat : stats) {
+            for (Object stat : stats) {
                 out.write(stat.toString());
                 out.newLine();
             }

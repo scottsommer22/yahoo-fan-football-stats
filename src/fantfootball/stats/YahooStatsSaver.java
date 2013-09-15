@@ -3,6 +3,7 @@ package fantfootball.stats;
 import java.util.List;
 
 import fantfootball.datamodel.PlayerStat;
+import fantfootball.stats.aggregate.AggregateStatCollection;
 import fantfootball.stats.settings.JaxbSettingsLoader;
 import fantfootball.stats.settings.Settings;
 import fantfootball.stats.settings.SettingsLoader;
@@ -22,7 +23,10 @@ public class YahooStatsSaver {
 
     private SettingsLoader settingsLoader = new JaxbSettingsLoader();
 
-    private PlayerStatWriter writer = new CsvPlayerStatWriter();
+    private PlayerStatWriter playerWriter = new CsvPlayerStatWriter("stats.csv");
+    private PlayerStatWriter aggWriter = new CsvPlayerStatWriter("aggstats.csv");
+    
+    private StatAggregationWorkflow statAggWorkflow = new StatAggregationWorkflow();
 
     /**
      * Save the player stats for the league and duration defined in the
@@ -39,8 +43,12 @@ public class YahooStatsSaver {
         YahooPlayerStatsDownloader statsDownloader = new YahooPlayerStatsDownloader(loader, settings.getLeague());
         List<PlayerStat> stats = statsDownloader.getLeaugeStats(settings.getFromWeek(), settings.getToWeek());
 
-        ((CsvPlayerStatWriter) writer).setFileName(settings.getLocation());
-        writer.write(stats);
+        AggregateStatCollection aggStats = statAggWorkflow.calculate(stats);
+        
+        ((CsvPlayerStatWriter) playerWriter).setFileName(settings.getLocation());
+        ((CsvPlayerStatWriter) aggWriter).setFileName(settings.getAggLocation());
+        playerWriter.write(stats);
+        aggWriter.write(aggStats.getAll());
     }
 
     /**
