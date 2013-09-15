@@ -106,7 +106,7 @@ public class YahooPlayerStatsDownloader {
             for (TagNode team : teams) {
                 if (team.getName().equals("td")) {
                     TagNode[] node = team.getElementsByName("a", true);
-                    String name = node[0].getText().toString();
+                    String name = node[1].getText().toString();
                     String link = node[0].getAttributeByName("href");              
                     String key = getKeyFromUrl(link);
                     
@@ -160,8 +160,8 @@ public class YahooPlayerStatsDownloader {
         for (int i = 0; i < stats.size(); i++) {
             Node player = players.get(i);
             String points = player.getTextContent();
-            String projected = player.getParentNode().getNextSibling().getTextContent();
-            String percentage = player.getParentNode().getNextSibling().getNextSibling().getTextContent();
+            String projected = player.getParentNode().getParentNode().getNextSibling().getTextContent();
+            String percentage = player.getParentNode().getParentNode().getNextSibling().getNextSibling().getTextContent();
             
             double converted = Double.parseDouble(percentage.replace("%", ""))/100;
             
