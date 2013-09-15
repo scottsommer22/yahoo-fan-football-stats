@@ -76,7 +76,7 @@ public class AggregateStat <T> {
     }
     
     public String toString(){
-        return key + "," + value;
+        return key + "," + team + "," +  value;
     }
 
     public AggregateStatKey getKey() {

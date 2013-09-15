@@ -14,9 +14,9 @@ public class StatsLoaderTest {
 
     private static final Logger LOGGER = Logger.getLogger(StatsLoaderTest.class);
 
-    private static final String COOKIE = "NEED TO SET";
+    private static final String COOKIE = "TBD";
 
-    private static final String LEAGUE_KEY = "NEED TO SET";
+    private static final String LEAGUE_KEY = "TBD";
 
     @Test
     public void getHtml() {
