@@ -89,7 +89,14 @@ public class OptimalLineupCalculator implements StatCollector {
         
     }
     
-    @Override
+    
+    
+    public OptimalLineupCalculator(Map<Position, Integer> rosterSpots) {
+		super();
+		this.rosterSpots = rosterSpots;
+	}
+
+	@Override
     public void collect(AggregateStatCollection aggStats, LeagueStats leagueStats) {
         
         List<WeekStats> weekStatsList = leagueStats.getAllWeeks();
@@ -120,8 +127,5 @@ public class OptimalLineupCalculator implements StatCollector {
         
     }
 
-    public void setRosterSpots(Map<Position, Integer> rosterSpots) {
-        this.rosterSpots = rosterSpots;
-    }
 
 }

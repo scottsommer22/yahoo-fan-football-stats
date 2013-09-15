@@ -144,8 +144,7 @@ public class LeaugeStatTest {
         Assert.assertFalse(wrtm1wk1.isNewInStartingLineUp());
         Assert.assertFalse(wrtm1wk1.isNewToTeam());
       
-        sc = new OptimalLineupCalculator();
-        ((OptimalLineupCalculator)sc).setRosterSpots(ROSTER_SPOTS);
+        sc = new OptimalLineupCalculator(ROSTER_SPOTS);
         sc.collect(collected, leagueStats);
         
         PlayerStat te1wk1 = leagueStats.getWeek(1).getTeam(t1).getStats().getAllForPlayer(te1).get(0);

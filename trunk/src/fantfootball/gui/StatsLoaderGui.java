@@ -64,7 +64,7 @@ public class StatsLoaderGui extends JFrame {
         int toWeekValue = Integer.parseInt(toWeek.getText());
         String fileName = location.getText();
 
-        controller.saveYahooPlayerStats(new Settings(league, cookieValue, fromWeekValue, toWeekValue, fileName));
+        controller.saveYahooPlayerStats(new Settings(league, cookieValue, fromWeekValue, toWeekValue, fileName,"agg"+fileName));
     }
 
     public void addComponentsToFrame() {
