@@ -6,8 +6,8 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import fantfootball.datamodel.PlayerStat;
 import fantfootball.stats.HtmlPageLoader;
-import fantfootball.stats.PlayerStat;
 import fantfootball.stats.YahooPlayerStatsDownloader;
 
 public class StatsLoaderTest {
